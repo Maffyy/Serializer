@@ -8,6 +8,12 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 
+/// <summary>
+///  Program, which serializes the object into XML data. Instead of using Reflection this approach uses
+///  Multicast delegate.
+/// </summary>
+
+
 namespace Serializer {
 
     public delegate void PropertySerializer<Instance>(TextWriter writer, Instance instance);
@@ -23,14 +29,26 @@ namespace Serializer {
             propertySerializer(writer, instance);
             writer.WriteLine($"<{tag}>");
         }
-
+        /// <summary>
+        /// End of the recursion. If we access just object without any sub-objects, it's going to just print the object.
+        /// </summary>
+        /// <typeparam name="Value"></typeparam>
+        /// <param name="getter"></param>
+        /// <param name="tag"></param>
         public void AccessLeaf<Value>(PropertyGetter<Instance, Value> getter, string tag) {
 
             propertySerializer += (TextWriter writer, Instance instance) => {
                 writer.WriteLine($"<{tag}>{getter(instance)}</{tag}>");
             };
         }
-
+        /// <summary>
+        /// Adds a child delegate to a parent delegate. When we're going to call the RootDesc, delegates're going to be called in the order,
+        /// which we add them to other delegate (Multicast delegate).
+        /// </summary>
+        /// <typeparam name="SubProperty"></typeparam>
+        /// <param name="childDescriptor"></param>
+        /// <param name="getter"></param>
+        /// <param name="tag"></param>
         public void AccessChild<SubProperty>(RootDescriptor<SubProperty> childDescriptor,
             PropertyGetter<Instance, SubProperty> getter, string tag) {
 
